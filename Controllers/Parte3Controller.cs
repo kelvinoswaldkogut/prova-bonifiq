@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ProvaPub.Models;
 using ProvaPub.Repository;
 using ProvaPub.Services;
+using ProvaPub.Services.Interfaces;
 
 namespace ProvaPub.Controllers
 {
@@ -16,20 +17,25 @@ namespace ProvaPub.Controllers
     /// Outra parte importante é em relação à data (OrderDate) do objeto Order. Ela deve ser salva no banco como UTC mas deve retornar para o cliente no fuso horário do Brasil. 
     /// Demonstre como você faria isso.
     /// </summary>
+    /// 
+
+
+
     [ApiController]
 	[Route("[controller]")]
 	public class Parte3Controller :  ControllerBase
 	{
-		[HttpGet("orders")]
-		public async Task<Order> PlaceOrder(string paymentMethod, decimal paymentValue, int customerId)
+        private readonly IOrderService _orderService;
+        public Parte3Controller(IOrderService orderService)   
+        {
+            _orderService = orderService;
+        }
+		[HttpGet("Orders")]
+		public async Task<string> PlaceOrder(string paymentMethod, decimal paymentValue, int customerId)
 		{
-            var contextOptions = new DbContextOptionsBuilder<TestDbContext>()
-    .UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=Teste;Trusted_Connection=True;")
-    .Options;
+            var response = await _orderService.PayOrder(paymentMethod, paymentValue, customerId);
 
-            using var context = new TestDbContext(contextOptions);
-
-            return await new OrderService(context).PayOrder(paymentMethod, paymentValue, customerId);
+            return response; 
 		}
 	}
 }

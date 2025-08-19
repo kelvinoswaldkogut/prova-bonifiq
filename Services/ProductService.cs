@@ -1,21 +1,49 @@
 ﻿using ProvaPub.Models;
+using ProvaPub.Persistence.Interfaces;
 using ProvaPub.Repository;
+using ProvaPub.Services.Interfaces;
 
 namespace ProvaPub.Services
 {
-	public class ProductService
+	public class ProductService : IProductService
 	{
-		TestDbContext _ctx;
+	
+		private readonly IReader _reader;
 
-		public ProductService(TestDbContext ctx)
+		public ProductService(IReader reader)
 		{
-			_ctx = ctx;
+			_reader = reader;
 		}
 
-		public ProductList  ListProducts(int page)
+		public async Task<PagLists<Product>>  ListProducts(int page)
 		{
-			return new ProductList() {  HasNext=false, TotalCount =10, Products = _ctx.Products.ToList() };
-		}
+			var prodResponse = new PagLists<Product>();
+			var productList = await  _reader.GetProductListAsync();
 
-	}
+			
+			if (productList != null ) 
+			{
+                var pagedProducts = productList
+                .Skip((page - 1) * Rules.PageSize) 
+                .Take(Rules.PageSize)           
+                .ToList();
+
+                prodResponse = new PagLists<Product>()
+                {
+                    HasNext = productList.Count > page * Rules.PageSize,
+                    TotalCount = productList.Count,
+                    Itens = pagedProducts
+                };
+
+            }
+			return prodResponse;
+           
+        }
+        private static class Rules
+        {
+            public static int PageSize = 10;
+        }
+
+    }
+	
 }
